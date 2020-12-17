@@ -1,0 +1,39 @@
+resources:
+  containers:
+  - container: adoptopenjdk
+    image: adoptopenjdk:11-jre-hotspot
+  - container: postgres
+    image: postgres:12.3
+    ports:
+    - 5432:5432
+    env:
+      POSTGRES_USER: elsaBackend
+      POSTGRES_PASSWORD:
+      POSTGRES_HOST_AUTH_METHOD: trust
+
+pool:
+  vmImage: 'ubuntu-20.04'
+
+container: adoptopenjdk
+services:
+  postgres: postgres
+
+steps:
+
+- script: |
+    curl -LJ https://github.com/schemaspy/schemaspy/releases/download/v6.1.0/schemaspy-6.1.0.jar -o schemaspy.jar
+    curl -LJ https://jdbc.postgresql.org/download/postgresql-42.2.18.jar -o postgresql.jar
+    curl -LJ https://repo.eclipse.org/content/groups/releases//org/eclipse/jgit/org.eclipse.jgit.pgm/5.10.0.202012080955-r/org.eclipse.jgit.pgm-5.10.0.202012080955-r.sh -o jgit.jar
+  displayName: Download tools
+- script: |
+    java -jar jgit.jar clone https://github.com/elsa-hanke/elsa-backend.git
+    cd elsa-backend
+    sed -i 's/localhost/postgres/g' build.gradle
+    ./gradlew liquibaseUpdate
+    cd ..
+  displayName: Generate database
+- script: |
+    java -jar schemaspy.jar -t pgsql11 -dp postgresql.jar -db elsaBackend -host postgres -port 5432 -u elsaBackend -o dist -vizjs
+  displayName: Generate schemaspy report
+- publish: $(System.DefaultWorkingDirectory)/dist
+  artifact: ElsaSchemaspyReport
