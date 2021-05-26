@@ -77,4 +77,4 @@ stages:
                     regionName: "eu-west-1"
                     awsCommand: "cloudfront"
                     awsSubCommand: "create-invalidation"
-                    awsArguments: '--distribution-id E12KDI5JPO05NG --paths "/schemaspy/*"'
+                    awsArguments: '--distribution-id EXEO15DPST8ID --paths "/schemaspy/*"'
